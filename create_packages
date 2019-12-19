@@ -1,0 +1,100 @@
+#!/bin/bash
+
+
+######################################################################
+
+VERSION="4.4.3"
+
+######################################################################
+### HELPERS
+
+prepare(){
+
+	echo "***************************************************************************************************************************************"
+	echo "PREPARE"
+   set -e
+   set -x
+   wget -c -O ${VERSION}-static.tar.gz https://www.zabbix.com/downloads/${VERSION}/zabbix_agents-${VERSION}-linux3.0-amd64-static.tar.gz
+   mkdir $TMPDIR/static
+   tar -C $TMPDIR/static -zxvf $SDIR/${VERSION}-static.tar.gz
+   rm $TMPDIR/static/conf/zabbix_agentd/userparameter_*.conf
+   mkdir -p $TMPDIR/static/etc/init.d/
+   cp $SDIR/zabbix-agent.sysv $TMPDIR/static/etc/init.d/zabbix-agent
+   mv $TMPDIR/static/conf $TMPDIR/static/etc/zabbix/
+   set +x
+   set +e
+   echo "prepare complete"
+ 
+}
+
+create_package(){
+	TYPE="$1"
+   echo "***************************************************************************************************************************************"
+   echo "PACKAGE TYPE: $TYPE"
+   echo
+   set -x
+   fpm --verbose -s dir \
+      -t $TYPE \
+		-n zabbix-agent \
+      --license GPLv2 \
+      -a native \
+	   --deb-no-default-config-files \
+      --deb-group zabbix \
+      --rpm-group zabbix \
+      --rpm-user zabbix \
+      --deb-user zabbix \
+      -m "VICO OPS <operations@vico-research.com>" \
+      --url "https://github.com/vico-research-and-consulting/zabbix-agent-static" \
+      --after-install ${SDIR}/postinstall \
+      --before-remove ${SDIR}/prerm \
+      --after-remove  ${SDIR}/postrm \
+      -v $VERSION \
+      $TMPDIR/static/=/
+   set +x
+
+   echo "CONTENTS $TYPE:"
+   echo "------------------------------------------------------_"
+   if [ "$TYPE" = "deb" ];then
+   	dpkg -c zabbix-agent_*.deb
+      RET="$?"
+   elif [ "$TYPE" = "rpm" ];then
+      rpm -qlvp zabbix-agent*.rpm
+      RET="$?"
+   fi
+   echo "------------------------------------------------------_"
+   if [ "$RET" != "0" ];then
+       echo "ERROR: error on creation of $TYPE package"
+       exit 1
+   fi
+}
+
+######################################################################
+### MAIN
+
+if [ -z "$1" ];then
+  echo "$0 <version>"
+fi
+
+SDIR="$(dirname $(readlink -f $0))/"
+
+for P in $HOME/.gem/ruby/*/bin/fpm;do
+   P="$(dirname $P)"
+   export PATH="$P:$PATH"
+done
+
+if ( ! (type -a fpm >/dev/null 2>&1 ) );then
+   echo "Unable to find 'fpm'"
+   exit 100
+fi
+
+echo "CREATING VERSION: $VERSION"
+rm -rf zabbix-agent_*.deb zabbix-agent*.rpm
+
+TMPDIR="$(mktemp -d)"
+trap "rm -rf $TMPDIR" EXIT TERM INT
+
+prepare
+create_package deb
+#create_package rpm
+
+exit 0
