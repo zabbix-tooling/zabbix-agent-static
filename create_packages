@@ -14,7 +14,7 @@ prepare(){
 	echo "PREPARE"
    set -e
    set -x
-   wget -c -O ${VERSION}-static.tar.gz https://www.zabbix.com/downloads/${VERSION}/zabbix_agents-${VERSION}-linux3.0-amd64-static.tar.gz
+   wget -c -O $SDIR/${VERSION}-static.tar.gz https://www.zabbix.com/downloads/${VERSION}/zabbix_agents-${VERSION}-linux3.0-amd64-static.tar.gz
    mkdir $TMPDIR/static
    tar -C $TMPDIR/static -zxvf $SDIR/${VERSION}-static.tar.gz
    rm $TMPDIR/static/conf/zabbix_agentd/userparameter_*.conf
@@ -26,6 +26,9 @@ prepare(){
    mv $TMPDIR/static/bin $TMPDIR/static/usr/bin
    mkdir -p $TMPDIR/static/var/run/zabbix $TMPDIR/static/var/log/zabbix
    chmod 755 $TMPDIR/static/var/run/zabbix $TMPDIR/static/var/log/zabbix
+   if [ -f "$SRCDIR/zabbix_agentd.conf.custom" ];then
+      cp -v "$SRCDIR/zabbix_agentd.conf.custom" TMPDIR/static/etc/zabbix/
+   fi
    set +x
    set +e
    echo "prepare complete"

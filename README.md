@@ -28,6 +28,7 @@ This project utilizes fpm:
    sudo apt-get install ruby-dev build-essential debhelper devscripts rpm
    gem install fpm --user
    ```
+ * Add a zabbix-agent config template, if neccessary (`<projectdir>/zabbix_agentd.conf.custom`)
  * Create packages
    ```
    git commit ....
