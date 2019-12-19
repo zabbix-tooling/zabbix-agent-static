@@ -21,6 +21,11 @@ prepare(){
    mkdir -p $TMPDIR/static/etc/init.d/
    cp $SDIR/zabbix-agent.sysv $TMPDIR/static/etc/init.d/zabbix-agent
    mv $TMPDIR/static/conf $TMPDIR/static/etc/zabbix/
+   mkdir $TMPDIR/static/usr
+   mv $TMPDIR/static/sbin $TMPDIR/static/usr/sbin
+   mv $TMPDIR/static/bin $TMPDIR/static/usr/bin
+   mkdir -p $TMPDIR/static/var/run/zabbix $TMPDIR/static/var/log/zabbix
+   chmod 755 $TMPDIR/static/var/run/zabbix $TMPDIR/static/var/log/zabbix
    set +x
    set +e
    echo "prepare complete"
@@ -48,6 +53,7 @@ create_package(){
       --after-install ${SDIR}/postinstall \
       --before-remove ${SDIR}/prerm \
       --after-remove  ${SDIR}/postrm \
+      --conflicts zabbix-agent --conflicts zabbix-get --conflicts zabbix-sender \
       -v $VERSION \
       $TMPDIR/static/=/
    set +x
@@ -94,7 +100,7 @@ TMPDIR="$(mktemp -d)"
 trap "rm -rf $TMPDIR" EXIT TERM INT
 
 prepare
+create_package rpm
 create_package deb
-#create_package rpm
 
 exit 0

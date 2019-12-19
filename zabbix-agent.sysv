@@ -37,7 +37,7 @@ fi
 case "$1" in
   start)
     log_daemon_msg "Starting $DESC" "$NAME"
-    start-stop-daemon --oknodo --start --pidfile $PID --exec $DAEMON >/dev/null 2>&1
+    start-stop-daemon --oknodo --start --exec $DAEMON -- -c /etc/zabbix/zabbix_agentd.conf >/dev/null 2>&1
     case "$?" in
         0) log_end_msg 0 ;;
         *) log_end_msg 1; exit 1 ;;
@@ -45,14 +45,14 @@ case "$1" in
     ;;
   stop)
     log_daemon_msg "Stopping $DESC" "$NAME"
-    start-stop-daemon --oknodo --stop --pidfile $PID --retry $RETRY
+    start-stop-daemon --oknodo --stop --retry $RETRY --exec /usr/sbin/zabbix_agentd -- -c /etc/zabbix/zabbix_agentd.conf
     case "$?" in
         0) log_end_msg 0 ;;
         *) log_end_msg 1; exit 1 ;;
     esac
     ;;
   status)
-    status_of_proc -p "$PID" "$DAEMON" "$NAME" && exit 0 || exit $?
+    status_of_proc "$DAEMON" "$NAME" --exec /usr/sbin/zabbix_agentd -- -c /etc/zabbix/zabbix_agentd.conf && exit 0 || exit $?
     ;;
   restart|force-reload)
     $0 stop
