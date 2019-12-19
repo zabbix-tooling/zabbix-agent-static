@@ -48,6 +48,7 @@ create_package(){
       --rpm-group zabbix \
       --rpm-user zabbix \
       --deb-user zabbix \
+      --config-files /etc/zabbix/zabbix_agentd.conf \
       -m "VICO OPS <operations@vico-research.com>" \
       --url "https://github.com/vico-research-and-consulting/zabbix-agent-static" \
       --after-install ${SDIR}/postinstall \
